@@ -25,44 +25,11 @@ in
       puffer
       github-copilot-cli-fish
       gitnow
-    ]) ++ [
-      {
-        name = "spark";
-        src = pkgs.fetchFromGitHub {
-          owner = "jorgebucaran";
-          repo = "spark.fish";
-          rev = "90a60573ec8a8ecb741a861e0bfca2362f297e5f";
-          hash = "sha256-cRSZeqtXSaEKuHeTSk3Kpmwf98mKJ986x1KSxa/HggU=";
-        };
-      }
-      {
-        name = "getopts";
-        src = pkgs.fetchFromGitHub {
-          owner = "jorgebucaran";
-          repo = "getopts.fish";
-          rev = "4b74206725c3e11d739675dc2bb84c77d893e901";
-          hash = "sha256-9hRFBmjrCgIUNHuOJZvOufyLsfreJfkeS6XDcCPesvw=";
-        };
-      }
-      {
-        name = "fish-abbreviation-tips";
-        src = pkgs.fetchFromGitHub {
-          owner = "gazorby";
-          repo = "fish-abbreviation-tips";
-          rev = "8ed76a62bb044ba4ad8e3e6832640178880df485";
-          hash = "sha256-F1t81VliD+v6WEWqj1c1ehFBXzqLyumx5vV46s/FZRU=";
-        };
-      }
-      {
-        name = "dracula";
-        src = pkgs.fetchFromGitHub {
-          owner = "dracula";
-          repo = "fish";
-          rev = "269cd7d76d5104fdc2721db7b8848f6224bdf554";
-          hash = "sha256-Hyq4EfSmWmxwCYhp3O8agr7VWFAflcUe8BUKh50fNfY=";
-        };
-      }
-    ];
+      spark
+      getopts
+      abbreviation-tips
+      dracula
+    ]);
     programs = {
       fish = {
         enable = true;
