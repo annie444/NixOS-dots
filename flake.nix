@@ -1,5 +1,5 @@
 {
-  description = "Homelab NixOS Flake";
+  description = "Your new nix config";
 
   inputs = {
     # nix-index-database
@@ -13,14 +13,14 @@
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
     # Also see the 'unstable-packages' overlay at 'overlays/default.nix'.
 
+    # Home manager
+    home-manager.url = "github:nix-community/home-manager/release-23.11";
+    home-manager.inputs.nixpkgs.follows = "nixpkgs";
+
     # sops secret provisioning
     sops-nix.url = "github:Mic92/sops-nix";
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
     sops-nix.inputs.nixpkgs-stable.follows = "";
-
-    # Home manager
-    home-manager.url = "github:nix-community/home-manager/release-23.11";
-    home-manager.inputs.nixpkgs.follows = "nixpkgs";
 
     # disko
     disko.url = "github:nix-community/disko";
@@ -28,10 +28,6 @@
 
     # nixos hardware
     nixos-hardware.url = "github:NixOS/nixos-hardware";
-
-    # flake registry
-    flake-registry.url = "github:NixOS/flake-registry";
-    flake-registry.flake = false;
 
     # Special linker for nix
     nix-ld-rs.url = "github:nix-community/nix-ld-rs";
@@ -51,38 +47,45 @@
     nixos-wiki.inputs.treefmt-nix.follows = "treefmt-nix";
     nixos-wiki.inputs.disko.follows = "disko";
     nixos-wiki.inputs.sops-nix.follows = "sops-nix";
-
   };
 
-  outputs = { 
+  outputs = {
     self,
-    flake-utils,
     nixpkgs,
-    sops-nix,
-    deploy,
-    , ...
-  } @ inputs:
-  (flake-utils.lib.eachDefaultSystem (system:
-    let
-      pkgs = nixpkgs.legacyPackages."${system}";
-    in
-    {
-      devShell = pkgs.callPackage ./shell.nix {
-        inherit (sops-nix.packages."${pkgs.system}") sops-import-keys-hook ssh-to-pgp sops-init-gpg-key;
-        inherit (deploy.packages."${pkgs.system}") deploy-rs;
-      };
-  })) // {
-    nixosConfigurations = import ./nixos/configurations.nix (inputs // {
-      inherit inputs;
-    });
-    deploy = import ./nixos/deploy.nix (inputs // {
-      inherit inputs;
-    });
-    homeConfigurations = import ./home-manager/home.nix (inputs // {
-      inherit inputs;
-    });
-    
-    hydraJobs = nixpkgs.lib.mapAttrs' (name: config: nixpkgs.lib.nameValuePair "nixos-${name}" config.config.system.build.toplevel) self.nixosConfigurations;
-    checks = builtins.mapAttrs (system: deployLib: deployLib.deployChecks self.deploy) deploy.lib;
+    home-manager,
+    ...
+  } @ inputs: let
+    inherit (self) outputs;
+    # Supported systems for your flake packages, shell, etc.
+    systems = [
+      "aarch64-linux"
+      "i686-linux"
+      "x86_64-linux"
+      "aarch64-darwin"
+      "x86_64-darwin"
+    ];
+    # This is a function that generates an attribute by calling a function you
+    # pass to it, with each system as an argument
+    forAllSystems = nixpkgs.lib.genAttrs systems;
+  in {
+    # Your custom packages
+    # Accessible through 'nix build', 'nix shell', etc
+    packages = forAllSystems (system: import ./pkgs nixpkgs.legacyPackages.${system});
+    # Formatter for your nix files, available through 'nix fmt'
+    # Other options beside 'alejandra' include 'nixpkgs-fmt'
+    formatter = forAllSystems (system: nixpkgs.legacyPackages.${system}.alejandra);
+
+    # Your custom packages and modifications, exported as overlays
+    overlays = import ./overlays {inherit inputs;};
+    # Reusable nixos modules you might want to export
+    # These are usually stuff you would upstream into nixpkgs
+    nixosModules = import ./modules/nixos;
+    # Reusable home-manager modules you might want to export
+    # These are usually stuff you would upstream into home-manager
+    homeManagerModules = import ./modules/home-manager;
+
+    # NixOS configuration entrypoint
+    # Available through 'nixos-rebuild --flake .#your-hostname'
+    nixosConfigurations = import ./nixos/configurations.nix {inherit inputs outputs;};
   };
 }

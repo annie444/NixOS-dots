@@ -17,7 +17,8 @@
     # inputs.nix-colors.homeManagerModules.default
 
     # You can also split up your configuration and import pieces of it here:
-    # ./nvim.nix
+    ./tmux
+    ./fish.nix
   ];
 
   nixpkgs = {
@@ -47,8 +48,8 @@
 
   # TODO: Set your username
   home = {
-    username = "your-username";
-    homeDirectory = "/home/your-username";
+    username = "annie";
+    homeDirectory = "/home/annie";
   };
 
   # Add stuff for your user as you see fit:

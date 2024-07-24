@@ -2,47 +2,61 @@
 , nixpkgs
 , sops-nix
 , inputs
+, outputs
 , nixos-hardware
 , nix
 , ...
 }:
 let
   nixosSystem = nixpkgs.lib.makeOverridable nixpkgs.lib.nixosSystem;
-  customModules = import ../modules/modules-list.nix;
   baseModules = [
-    # make flake inputs accessiable in NixOS
-    { _module.args.inputs = inputs; }
     {
       imports = [
         ({ pkgs, ... }: {
-          nix.nixPath = [
-            "nixpkgs=${pkgs.path}"
-          ];
+          nix = {
+            settings = {
+              # Enable flakes and new 'nix' command
+              experimental-features = "nix-command flakes";
+              # Opinionated: disable global registry
+              flake-registry = "";
+              # Workaround for https://github.com/NixOS/nix/issues/9574
+              nix-path = [
+                config.nix.nixPath;
+                "nixpkgs=${pkgs.path}"
+              ];
+            };
+            # Opinionated: disable channels
+            channel.enable = false;
+
+            package = nixpkgs.lib.mkForce nix.packages.x86_64-linux.nix;
+
+            extraOptions = ''
+              experimental-features = nix-command flakes
+            '';
+
+            # Opinionated: make flake registry and nix path match flake inputs
+            registry = lib.mapAttrs (_: flake: {inherit flake;}) flakeInputs;
+            nixPath = lib.mapAttrsToList (n: _: "${n}=flake:${n}") flakeInputs;
+          };
           # TODO: remove when switching to 22.05
-          nix.package = nixpkgs.lib.mkForce nix.packages.x86_64-linux.nix;
-          nix.extraOptions = ''
-            experimental-features = nix-command flakes
-          '';
-          documentation.info.enable = true;
+          documentation.info.enable = false;
         })
         sops-nix.nixosModules.sops
+        inputs.home-manager.nixosModules.home-manager
       ];
+      home-manager = {
+        extraSpecialArgs = { inherit inputs outputs; };
+        users = import ../home-manager/users.nix;
+      };
     }
   ];
-  defaultModules = baseModules ++ customModules;
-in
-{
+in {
   homelab01 = nixosSystem {
     system = "x86_64-linux";
-    modules = defaultModules ++ [
+    modules = baseModules ++ [
       ./homelab01/configuration.nix
     ];
-  };
-  homelab02 = nixosSystem {
-    system = "x86_64-linux";
-    modules = defaultModules ++ [
-      ./homelab02/configuration.nix
-    ];
+    specialArgs = { inherit inputs outputs; };
   };
 }
 
