@@ -1,6 +1,5 @@
 { self
 , nixpkgs
-, sops-nix
 , inputs
 , outputs
 , nixos-hardware
@@ -38,8 +37,6 @@ let
             registry = lib.mapAttrs (_: flake: {inherit flake;}) flakeInputs;
             nixPath = lib.mapAttrsToList (n: _: "${n}=flake:${n}") flakeInputs;
           };
-          # TODO: remove when switching to 22.05
-          documentation.info.enable = false;
         })
         sops-nix.nixosModules.sops
         inputs.home-manager.nixosModules.home-manager

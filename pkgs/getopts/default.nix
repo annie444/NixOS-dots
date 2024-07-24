@@ -4,19 +4,19 @@
   fetchFromGitHub,
 }:
 pkgs.fishPlugins.buildFishPlugin rec {
-  pname = "gitnow";
-  version = "2.12.0";
+  pname = "getopts";
+  version = "1.0.0";
 
   src = fetchFromGitHub {
-    owner = "joseluisq";
-    repo = "gitnow";
-    rev = "2.12.0";
-    hash = "sha256-PuorwmaZAeG6aNWX4sUTBIE+NMdn1iWeea3rJ2RhqRQ=";
+    owner = "jorgebucaran";
+    repo = "getopts.fish";
+    rev = "1.0.0";
+    hash = "sha256-U115FNlQwWMvsmYRsfyb9FqqzVciC+EQMPYWTbRCuUA=";
   };
 
   meta = with lib; {
-    description = "Speed up your Git workflow. 🐠";
-    homepage = "https://github.com/joseluisq/gitnow";
+    description = "Parse CLI options in Fish.";
+    homepage = "https://github.com/jorgebucaran/getopts.fish";
     license = licenses.mit;
     maintainers = [ {
       email = "annie.ehler.4@gmail.com";
